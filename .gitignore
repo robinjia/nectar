@@ -1,0 +1,17 @@
+#Compiled files
+*.jar
+*.o
+*.pyc
+
+# LaTeX
+*.aux
+*.log
+*.out
+*.pdf
+
+# Swap files
+*.sw*
+
+# Temporary files
+tmp*
+*.tmp
