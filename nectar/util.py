@@ -1,6 +1,6 @@
 """General, miscellaneous utilities."""
 import sys
 
-def log2(s):
+def log(s):
   print s
   print >> sys.stderr, s

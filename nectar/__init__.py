@@ -1,1 +1,2 @@
-from main import *  # Put main at top level
+from util import *  # Put util at top level
+import vocabulary
