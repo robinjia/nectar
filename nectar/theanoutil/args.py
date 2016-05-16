@@ -1,44 +1,91 @@
 """Add standard theano-related flags to an argparse.ArgumentParser."""
+import argparse
 import theano
 
-def add_nlp_flags(parser):
-  """Add common neural network NLP flags.
+class NLPArgumentParser(argparse.ArgumentParser):
+  """An ArgumentParser with some built-in arguments.
   
-  TODO: make which flags are added configurable.
+  Allows you to not have to retype help messages every time.
   """
-  # Setup
-  parser.add_argument('--hidden-size', '-d', type=int, help='Dimension of hidden vectors')
-  parser.add_argument('--emb-size', '-e', type=int, help='Dimension of word vectors')
-  parser.add_argument('--weight-scale', '-w', type=float, default=1e-2,
-                      help='Weight scale for initialization (default = 1e-2)')
-  parser.add_argument( '--unk-cutoff', '-u', type=int, default=0,
-                      help='Treat input words with <= this many occurrences as UNK.')
-  # Training hyperparameters
-  parser.add_argument('--num-epochs', '-t', default=[],
-                      type=lambda s: [int(x) for x in s.split(',')], 
-                      help=('Number of epochs to train (default is no training). '
-                            'If comma-separated list, will run for some epochs, halve learning rate, etc.'))
-  parser.add_argument('--learning-rate', '-r', type=float, default=0.1,
-                      help='Initial learning rate (default = 0.1).')
-  # Decoding hyperparameters
-  parser.add_argument('--beam-size', '-k', type=int, default=0,
-                      help='Use beam search with given beam size (default is greedy).')
-  # Data
-  parser.add_argument('--train-file', help='Path to training data.')
-  parser.add_argument('--dev-frac', type=float, default=0.0,
-                      help='Take this fraction of train data as dev data.')
-  parser.add_argument('--test-file', help='Path to test data.')
-  # Random seeds
-  parser.add_argument('--dev-seed', type=int, default=0,
-                      help='RNG seed for the train/dev splits (default = 0)')
-  parser.add_argument('--model-seed', type=int, default=0,
-                      help="RNG seed for the model (default = 0)")
+  def add_flag_helper(self, long_name, short_name, *args, **kwargs):
+    long_flag = '--%s' % long_name
+    if 'help' in kwargs:
+      if 'default' in kwargs:
+        # Append default value to help message
+        new_help = '%s (default=%s)' % (kwargs['help'], str(kwargs['default']))
+        kwargs['help'] = new_help
+      # Append period to end, if missing
+      if not kwargs['help'].endswith('.'):
+        kwargs['help'] = kwargs['help'] + '.'
+    if short_name:
+      short_flag = '-%s' % short_name
+      self.add_argument(long_flag, short_flag, *args, **kwargs)
+    else:
+      self.add_argument(long_flag, *args, **kwargs)
 
-def add_theano_flags(parser):
-  parser.add_argument('--theano-fast-compile', action='store_true', help='Run Theano in fast compile mode.')
-  parser.add_argument('--theano-profile', action='store_true', help='Turn on profiling in Theano.')
+  # Model hyperparameters
+  def add_hidden_size(self, short_name=None):
+    self.add_flag_helper('hidden-size', short_name, type=int,
+                         help='Dimension of hidden vectors')
+  def add_emb_size(self, short_name=None):
+    self.add_flag_helper('emb-size', short_name, type=int, 
+                         help='Dimension of word vectors')
+  def add_weight_scale(self, short_name=None):
+    self.add_flag_helper('weight-scale', short_name, type=float, default=1e-2,
+                         help='Weight scale for initialization')
+  def add_unk_cutoff(self, short_name=None):
+    self.add_flag_helper('unk-cutoff', short_name, type=int, default=0,
+                         help='Treat input words with <= this many occurrences as UNK')
+
+  # Training hyperparameters
+  def add_num_epochs(self, short_name=None):
+    self.add_flag_helper(
+        'num-epochs', short_name, default=[], type=lambda s: [int(x) for x in s.split(',')], 
+        help=('Number of epochs to train. If comma-separated list, will run for some epochs, halve learning rate, etc.'))
+  def add_learning_rate(self, short_name=None):
+    self.add_flag_helper('learning-rate', short_name, type=float, default=0.1,
+                         help='Initial learning rate.')
+  # Decoding hyperparameters
+  def add_beam_size(self, short_name=None):
+    self.add_flag_helper('beam-size', short_name, type=int, default=0,
+                         help='Use beam search with given beam size, or greedy if 0')
+  # Data
+  def add_train_file(self, short_name=None):
+    self.add_flag_helper('train-file', short_name, help='Path to training data')
+  def add_dev_file(self, short_name=None):
+    self.add_flag_helper('dev-file', short_name, help='Path to dev data')
+  def add_test_file(self, short_name=None):
+    self.add_flag_helper('test-file', short_name, help='Path to test data')
+  def add_dev_frac(self, short_name=None):
+    self.add_flag_helper('dev-frac', short_name, type=float, default=0.0,
+                         help='Take this fraction of train data as dev data')
+
+  # Random seeds
+  def add_dev_seed(self, short_name=None):
+    self.add_flag_helper('dev-seed', short_name, type=int, default=0,
+                         help='RNG seed for the train/dev splits')
+  def add_model_seed(self, short_name=None):
+    self.add_flag_helper('model-seed', short_name, type=int, default=0,
+                         help="RNG seed for the model")
+
+  # Sasving and loading
+  def add_save_file(self, short_name=None):
+    self.add_flag_helper('save-file', short_name, help='Path for saving model')
+  def add_load_file(self, short_name=None):
+    self.add_flag_helper('load-file', short_name, help='Path for loading model')
+
+  # Output
+  def add_stats_file(self, short_name=None):
+    self.add_flag_helper('stats-file', short_name, help='File to write stats JSON')
+  def add_html_file(self, short_name=None):
+    self.add_flag_helper('html-file', short_name, help='File to write output HTML')
+
+  def add_theano_flags(self):
+    self.add_flag_helper('theano-fast-compile', None, action='store_true', help='Run Theano in fast compile mode')
+    self.add_flag_helper('theano-profile', None, action='store_true', help='Turn on profiling in Theano')
 
 def configure_theano(opts):
+  """Configure theano given arguments passed in."""
   if opts.theano_fast_compile:
     theano.config.mode='FAST_COMPILE'
     theano.config.optimizer = 'None'
