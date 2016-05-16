@@ -34,7 +34,10 @@ class Vocabulary(object):
   def get_index(self, word):
     if word in self.word2index:
       return self.word2index[word]
-    return UNK_TOKEN
+    return UNK_INDEX
+
+  def has_word(self, word):
+    return word in self.word2index
 
   def size(self):
     # Report number of words that have been assigned an index

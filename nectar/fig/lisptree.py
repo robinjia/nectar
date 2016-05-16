@@ -2,7 +2,8 @@
 
 def from_string(s):
   """Parse a Java fig LispTree from a string."""
-  toks = s.split(' ')
+  s = s.replace('(', ' ( ').replace(')', ' ) ')
+  toks = [x for x in s.split(' ') if x]
   def recurse(i):
     if toks[i] == '(':
       subtrees = []
