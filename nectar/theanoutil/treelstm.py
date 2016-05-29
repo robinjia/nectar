@@ -53,8 +53,8 @@ def encode_child_sum(x_vecs, topo_order, adj_mat, c0, h0, W, U, Uf):
 
     # Update c_mat and h_mat
     e_j = T.eye(n)[j]
-    new_c_mat = c_mat + T.outer(e_j, c_j)
-    new_h_mat = h_mat + T.outer(e_j, h_j)
+    new_c_mat = T.set_subtensor(c_mat[j], c_j)
+    new_h_mat = T.set_subtensor(h_mat[j], h_j)
     #new_h_mat = ntu.printed(new_h_mat, 'new_h_mat')
     return new_c_mat, new_h_mat
 

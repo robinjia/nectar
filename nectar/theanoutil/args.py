@@ -45,6 +45,9 @@ class NLPArgumentParser(argparse.ArgumentParser):
   def add_learning_rate(self, short_name=None):
     self.add_flag_helper('learning-rate', short_name, type=float, default=0.1,
                          help='Initial learning rate.')
+  def add_clip_thresh(self, short_name=None):
+    self.add_flag_helper('clip-thresh', short_name, type=float, default=1.0,
+                         help='Total-norm threshold to clip gradients.')
   # Decoding hyperparameters
   def add_beam_size(self, short_name=None):
     self.add_flag_helper('beam-size', short_name, type=int, default=0,

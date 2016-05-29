@@ -7,6 +7,11 @@ from theano.ifelse import ifelse
 def printed(var, name=''):
   return theano.printing.Print(name)(var)
 
+def logsumexp(mat, axis=0):
+  """Apply a row-wise log-sum-exp, summing along axis."""
+  maxes = T.max(mat, axis=axis)
+  return T.log(T.sum(T.exp(mat - maxes), axis=axis)) + maxes
+
 def clip_gradients(grads, clip_thresh):
   """Clip gradients to some total norm."""
   total_norm = T.sqrt(sum(T.sum(g**2) for g in grads))

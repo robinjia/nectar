@@ -1,4 +1,5 @@
 from args import *
-import rnn
-from util import *
 from model import *
+import rnn
+import treelstm
+from util import *
