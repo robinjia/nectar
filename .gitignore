@@ -1,3 +1,6 @@
+# Downloaded dependencies
+lib/
+
 #Compiled files
 *.jar
 *.o

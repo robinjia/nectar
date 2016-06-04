@@ -8,8 +8,9 @@ import sys
 import time
 
 LIB_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))),
     'lib/stanford-corenlp/*')
+print LIB_PATH
 DEVNULL = open(os.devnull, 'wb')
 
 class CoreNLPServer(object):
@@ -33,6 +34,7 @@ class CoreNLPServer(object):
     # Wait until server has started up.
     while True:
       line = p.stderr.readline().rstrip()
+      if not line: continue
       print >> sys.stderr, line
       if 'listening' in line: 
         break
@@ -69,7 +71,7 @@ class CoreNLPServer(object):
 def main():
   """Start a REPL to interact with the server."""
   with CoreNLPServer() as s:
-    print s.query_depparse(['what states border alaska'])
+    print json.dumps(s.query_depparse(['Bills on ports and immigration were submitted by Senator Brownback , Republican of Kansas']), indent=2)
 
 if __name__ == '__main__':
   main()
