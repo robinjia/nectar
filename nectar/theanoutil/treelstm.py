@@ -30,7 +30,6 @@ def encode_child_sum(x_vecs, topo_order, adj_mat, c0, h0, W, U, Uf):
   def recurrence(j, c_mat, h_mat, n, d, *args):
     x_j = x_vecs[j]
     children = T.eq(adj_mat[j,], 1).nonzero()  # let c(j) be number of children of node j
-    #children = ntu.printed(children, 'children')
     c_children = c_mat[children]  # c(j) x d
     h_children = h_mat[children]  # c(j) x d
     # If this node has no children, use c0 and h0; else use c_mat and h_mat
@@ -52,10 +51,8 @@ def encode_child_sum(x_vecs, topo_order, adj_mat, c0, h0, W, U, Uf):
     h_j = o_j * T.tanh(c_j)
 
     # Update c_mat and h_mat
-    e_j = T.eye(n)[j]
     new_c_mat = T.set_subtensor(c_mat[j], c_j)
     new_h_mat = T.set_subtensor(h_mat[j], h_j)
-    #new_h_mat = ntu.printed(new_h_mat, 'new_h_mat')
     return new_c_mat, new_h_mat
 
   n = x_vecs.shape[0]
