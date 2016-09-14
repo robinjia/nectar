@@ -1,2 +1,1 @@
-from util import *  # Put util at top level
-import vocabulary
+from core.util import *  # Put util at top level
