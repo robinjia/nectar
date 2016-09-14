@@ -74,9 +74,14 @@ class TheanoModel(object):
 
   def create_matrix(self, name, shape, weight_scale):
     """A helper method that creates a parameter matrix."""
-    mat = theano.shared(
-        name=name, value=weight_scale * np.random.uniform(
-            -1.0, 1.0, shape).astype(theano.config.floatX))
+    if shape:
+      value = weight_scale * np.random.uniform(-1.0, 1.0, shape).astype(
+          theano.config.floatX)
+    else:
+      # None means it's a scalar
+      dtype = np.dtype(theano.config.floatX)
+      value = dtype.type(weight_scale * np.random.uniform(-1.0, 1.0))
+    mat = theano.shared(name=name, value=value)
     self.params[name] = mat
     self.param_list.append(mat)
 
