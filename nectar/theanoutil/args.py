@@ -87,6 +87,16 @@ class NLPArgumentParser(argparse.ArgumentParser):
     self.add_flag_helper('theano-fast-compile', None, action='store_true', help='Run Theano in fast compile mode')
     self.add_flag_helper('theano-profile', None, action='store_true', help='Turn on profiling in Theano')
 
+  def parse_args(self):
+    """Configure theano and print help on empty arguments."""
+    if len(sys.argv) == 1:
+      self.print_help()
+      sys.exit(1)
+    args = super(NLPArgumentParser, self).parse_args()
+    configure_theano(args)
+    return args
+
+
 def configure_theano(opts):
   """Configure theano given arguments passed in."""
   if opts.theano_fast_compile:
