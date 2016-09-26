@@ -30,8 +30,8 @@ class NLPArgumentParser(argparse.ArgumentParser):
   def add_emb_size(self, short_name=None):
     self.add_flag_helper('emb-size', short_name, type=int, 
                          help='Dimension of word vectors')
-  def add_weight_scale(self, short_name=None):
-    self.add_flag_helper('weight-scale', short_name, type=float, default=1e-2,
+  def add_weight_scale(self, short_name=None, default=1e-2):
+    self.add_flag_helper('weight-scale', short_name, type=float, default=default,
                          help='Weight scale for initialization')
   def add_unk_cutoff(self, short_name=None):
     self.add_flag_helper('unk-cutoff', short_name, type=int, default=0,

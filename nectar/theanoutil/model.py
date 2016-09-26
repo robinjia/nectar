@@ -50,18 +50,15 @@ class TheanoModel(object):
     # self.velocities = nt.create_grad_cache(self.param_list)
 
     # Set up theano functions
-    self.theano_funcs = self.setup_theano_funcs() 
+    self.theano_funcs = {} 
+    self.setup_theano_funcs() 
 
   def init_params(self):
     """Initialize parameters with repeated calls to self.create_matrix()."""
     raise NotImplementedError
 
   def setup_theano_funcs(self):
-    """Create theano.function objects for this model.
-
-    Returns:
-      dict mapping string keys to theano.function objects
-    """
+    """Create theano.function objects for this model in self.theano_funcs."""
     raise NotImplementedError
 
   def get_objective(self, example):
