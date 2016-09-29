@@ -167,5 +167,6 @@ class TheanoModel(object):
     with open(filename, 'rb') as f:
       model = pickle.load(f)
     # Recompile theano functions
-    model.theano_funcs = model.setup_theano_funcs()
+    model.theano_funcs = {}
+    model.setup_theano_funcs()
     return model

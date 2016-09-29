@@ -1,5 +1,6 @@
 """Add standard theano-related flags to an argparse.ArgumentParser."""
 import argparse
+import sys
 import theano
 
 class NLPArgumentParser(argparse.ArgumentParser):

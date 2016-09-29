@@ -24,6 +24,17 @@ class Vocabulary(object):
       self.word2index[word] = index
       self.word_list.append(word)
 
+  def add_words(self, words):
+    for w in words:
+      self.add_word(w)
+  
+  def add_sentence(self, sentence):
+    self.add_words(sentence.split(' '))
+
+  def add_sentences(self, sentences):
+    for s in sentences:
+      self.add_sentence(s)
+
   def add_word_hard(self, word):
     """Add word, make sure it is not UNK."""
     self.add_word(word, count=(self.unk_threshold+1))
@@ -35,6 +46,12 @@ class Vocabulary(object):
     if word in self.word2index:
       return self.word2index[word]
     return UNK_INDEX
+
+  def indexify_sentence(self, sentence):
+    return [self.get_index(w) for w in sentence.split(' ')]
+
+  def recover_sentence(self, indices):
+    return ' '.join(self.get_word(i) for i in indices)
 
   def has_word(self, word):
     return word in self.word2index
