@@ -16,7 +16,8 @@ def clip_gradients(grads, clip_thresh):
   """Clip gradients to some total norm."""
   total_norm = T.sqrt(sum(T.sum(g**2) for g in grads))
   scale = ifelse(T.gt(total_norm, clip_thresh),
-                 clip_thresh / total_norm, np.float64(1.0))
+                 clip_thresh / total_norm, 
+                 np.dtype(theano.config.floatX).type(1.0))
   clipped_grads = [scale * g for g in grads]
   return clipped_grads
 
