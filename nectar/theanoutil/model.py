@@ -69,8 +69,10 @@ class TheanoModel(object):
     """Run training on a single example."""
     raise NotImplementedError
 
-  def create_matrix(self, name, shape, weight_scale):
+  def create_matrix(self, name, shape, weight_scale, value=None):
     """A helper method that creates a parameter matrix."""
+    if value:
+      pass
     if shape:
       value = weight_scale * np.random.uniform(-1.0, 1.0, shape).astype(
           theano.config.floatX)
