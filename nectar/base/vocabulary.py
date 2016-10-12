@@ -56,6 +56,9 @@ class Vocabulary(object):
   def has_word(self, word):
     return word in self.word2index
 
+  def __contains__(self, word):
+    return self.has_word(word)
+
   def size(self):
     # Report number of words that have been assigned an index
     return len(self.word2index)

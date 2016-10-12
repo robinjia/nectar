@@ -32,6 +32,7 @@ class TheanoModel(object):
 
   See these methods for more details.
   """
+  DIVIDE_OBJECTIVE_BY_NUM_EXAMPLES = False
   def __init__(self):
     """A minimal example of what functions must be called during initialization.
 
@@ -65,6 +66,10 @@ class TheanoModel(object):
     """Get the loss on a single example."""
     raise NotImplementedError
 
+  def get_regularization(self):
+    """Get current regularization."""
+    return 0.0
+
   def train_one(self, example, lr):
     """Run training on a single example."""
     raise NotImplementedError
@@ -73,7 +78,7 @@ class TheanoModel(object):
     """A helper method that creates a parameter matrix."""
     if value:
       pass
-    if shape:
+    elif shape:
       value = weight_scale * np.random.uniform(-1.0, 1.0, shape).astype(
           theano.config.floatX)
     else:
@@ -121,9 +126,16 @@ class TheanoModel(object):
       train_obj = 0.0
       for ex in train_data:
         cur_obj = self.train_one(ex, lr)
+        if self.DIVIDE_OBJECTIVE_BY_NUM_EXAMPLES:
+          cur_obj /= float(len(train_data))
         train_obj += cur_obj
+      regularization = self.get_regularization()
+      train_obj += regularization
       if dev_data:
         dev_obj = sum(self.get_objective(ex) for ex in dev_data)
+        if self.DIVIDE_OBJECTIVE_BY_NUM_EXAMPLES:
+          dev_obj /= float(len(dev_data))
+        dev_obj += regularization
         dev_obj_list.append(dev_obj)
       else:
         dev_obj = 0.0
@@ -131,8 +143,8 @@ class TheanoModel(object):
       t1 = time.time()
 
       # Some formatting to make things align in columns
-      train_obj_str = '%.2f' % train_obj
-      dev_obj_str = '%.2f' % dev_obj
+      train_obj_str = '%.3f' % train_obj
+      dev_obj_str = '%.3f' % dev_obj
       time_str = '%.2f' % (t1 - t0)
       len_train_obj = max(len(train_obj_str), len_train_obj)
       len_dev_obj = max(len(dev_obj_str), len_dev_obj)

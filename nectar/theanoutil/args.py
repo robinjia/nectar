@@ -31,9 +31,12 @@ class NLPArgumentParser(argparse.ArgumentParser):
   def add_emb_size(self, short_name=None):
     self.add_flag_helper('emb-size', short_name, type=int, 
                          help='Dimension of word vectors')
-  def add_weight_scale(self, short_name=None, default=1e-2):
+  def add_weight_scale(self, short_name=None, default=1e-1):
     self.add_flag_helper('weight-scale', short_name, type=float, default=default,
                          help='Weight scale for initialization')
+  def add_l2_reg(self, short_name=None, default=0.0):
+    self.add_flag_helper('l2-reg', short_name, type=float, default=default,
+                         help='L2 Regularization constant.')
   def add_unk_cutoff(self, short_name=None):
     self.add_flag_helper('unk-cutoff', short_name, type=int, default=0,
                          help='Treat input words with <= this many occurrences as UNK')
@@ -43,8 +46,8 @@ class NLPArgumentParser(argparse.ArgumentParser):
     self.add_flag_helper(
         'num-epochs', short_name, default=[], type=lambda s: [int(x) for x in s.split(',')], 
         help=('Number of epochs to train. If comma-separated list, will run for some epochs, halve learning rate, etc.'))
-  def add_learning_rate(self, short_name=None):
-    self.add_flag_helper('learning-rate', short_name, type=float, default=0.1,
+  def add_learning_rate(self, short_name=None, default=0.1):
+    self.add_flag_helper('learning-rate', short_name, type=float, default=default,
                          help='Initial learning rate.')
   def add_clip_thresh(self, short_name=None):
     self.add_flag_helper('clip-thresh', short_name, type=float, default=1.0,
