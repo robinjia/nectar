@@ -50,6 +50,9 @@ class Vocabulary(object):
   def indexify_sentence(self, sentence):
     return [self.get_index(w) for w in sentence.split(' ')]
 
+  def indexify_list(self, elems):
+    return [self.get_index(w) for w in elems]
+
   def recover_sentence(self, indices):
     return ' '.join(self.get_word(i) for i in indices)
 
