@@ -135,7 +135,7 @@ class TheanoModel(object):
         dev_obj = sum(self.get_objective(ex) for ex in dev_data)
         if self.DIVIDE_OBJECTIVE_BY_NUM_EXAMPLES:
           dev_obj /= float(len(dev_data))
-        dev_obj += regularization
+        #dev_obj += regularization
         dev_obj_list.append(dev_obj)
       else:
         dev_obj = 0.0

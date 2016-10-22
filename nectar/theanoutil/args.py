@@ -3,6 +3,8 @@ import argparse
 import sys
 import theano
 
+from .. import log, log_dict
+
 class NLPArgumentParser(argparse.ArgumentParser):
   """An ArgumentParser with some built-in arguments.
   
@@ -97,6 +99,7 @@ class NLPArgumentParser(argparse.ArgumentParser):
       self.print_help()
       sys.exit(1)
     args = super(NLPArgumentParser, self).parse_args()
+    log_dict(vars(args), 'Command-line Arguments')
     configure_theano(args)
     return args
 

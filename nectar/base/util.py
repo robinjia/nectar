@@ -12,6 +12,12 @@ def log(msg, disappearing=False):
   else:
     print >> sys.stderr, msg
 
+def log_dict(d, name):
+  log('%s {' % name)
+  for k in d:
+    log('    %s: %s' % (k, str(d[k])))
+  log('}')
+
 def timed(func, msg):
   msg1 = '%s...' % msg
   log(msg1, disappearing=True)

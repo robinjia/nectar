@@ -65,3 +65,6 @@ class Vocabulary(object):
   def size(self):
     # Report number of words that have been assigned an index
     return len(self.word2index)
+
+  def __len__(self):
+    return self.size()
