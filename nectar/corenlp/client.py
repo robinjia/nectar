@@ -16,10 +16,18 @@ class CoreNLPClient(object):
     r = requests.get(url, params=params, data=data.encode('utf-8'))
     return r.json()
 
-  def query_depparse(self, sents):
-    """Standard query for getting dependency parses."""
+  def query_pos(self, sents):
+    """Standard query for getting POS tags."""
     properties = {
-        'tokenize.whitespace': True, 
+        'annotators': 'tokenize,ssplit,pos',
+        'outputFormat':'json'
+    }
+    return self.query(sents, properties)
+
+  def query_depparse(self, sents):
+    """Standard query for getting dependency parses on PTB-tokenized input."""
+    properties = {
+        'tokenize.whitespace': True,
         'annotators': 'tokenize,ssplit,pos,depparse',
         'outputFormat':'json'
     }
