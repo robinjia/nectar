@@ -1,5 +1,6 @@
 """Run a CoreNLP Server."""
 import atexit
+import multiprocessing
 import os
 import subprocess
 import sys
@@ -12,17 +13,23 @@ DEVNULL = open(os.devnull, 'wb')
 
 class CoreNLPServer(object):
   """An object that runs the CoreNLP server."""
-  def __init__(self, port=9000):
+  def __init__(self, port=9000, logfile=None, lib_path=LIB_PATH):
     self.port = port
+    self.lib_path = LIB_PATH
     self.process = None
+    if logfile:
+      self.logfd = open(logfile, 'wb')
+    else:
+      self.logfd = DEVNULL
 
   def start(self):
     """Start up the server on a separate process."""
-    print >> sys.stderr, 'Using lib directory %s' % LIB_PATH
+    print >> sys.stderr, 'Using lib directory %s' % self.lib_path
     p = subprocess.Popen(
-        ['java', '-mx4g', '-cp', LIB_PATH, 
-         'edu.stanford.nlp.pipeline.StanfordCoreNLPServer', str(self.port)],
-        stderr=subprocess.PIPE, stdout=DEVNULL)
+        ['java', '-mx4g', '-cp', self.lib_path,
+         'edu.stanford.nlp.pipeline.StanfordCoreNLPServer',
+         '--port', str(self.port)],
+        stderr=subprocess.PIPE, stdout=self.logfd)
     self.process = p
     atexit.register(p.terminate)  # Terminate on exit
     # Wait until server has started up.
@@ -33,10 +40,22 @@ class CoreNLPServer(object):
       if 'listening' in line: 
         break
 
+    # Start a process to write stderr to the log file
+    def log_stderr():
+      while True:
+        line = p.stderr.readline().rstrip()
+        print >> self.logfd, line
+    self.p_stderr = multiprocessing.Process(target=log_stderr)
+    self.p_stderr.start()
+
   def stop(self):
     """Stop running the server on a separate process."""
     if self.process:
       self.process.terminate()
+    if self.p_stderr:
+      self.p_stderr.terminate()
+    if self.logfd != DEVNULL:
+      self.logfd.close()
 
   def __enter__(self):
     self.start()

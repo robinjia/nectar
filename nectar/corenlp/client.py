@@ -13,7 +13,7 @@ class CoreNLPClient(object):
     url = '%s:%d' % (self.hostname, self.port)
     params = {'properties': str(properties)}
     data = '\n'.join(sents)
-    r = requests.get(url, params=params, data=data)
+    r = requests.get(url, params=params, data=data.encode('utf-8'))
     return r.json()
 
   def query_depparse(self, sents):
