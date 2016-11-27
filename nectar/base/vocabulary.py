@@ -68,3 +68,6 @@ class Vocabulary(object):
 
   def __len__(self):
     return self.size()
+
+  def __iter__(self):
+    return iter(self.word_list)

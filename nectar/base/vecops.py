@@ -1,10 +1,13 @@
-"""Operations on sparse vectors represented as defaultdicts."""
+"""Operations on sparse vectors represented as dicts."""
 import collections
 
 # Mutating a vector
 def add(v, other, scale=1):
   for k in other:
-    v[k] += scale * other[k]
+    if k in v:
+      v[k] += scale * other[k]
+    else:
+      v[k] = scale * other[k]
 
 def scale(v, scale):
   for k in v.keys():
@@ -16,7 +19,8 @@ def dot(v1, v2):
     return dot(v2, v1)
   ans = 0
   for k in v1:
-    ans += v1[k] * v2[k]
+    if k in v2:
+      ans += v1[k] * v2[k]
   return ans
 
 def sum(v1, v2):
