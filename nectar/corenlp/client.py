@@ -14,7 +14,8 @@ class CoreNLPClient(object):
     params = {'properties': str(properties)}
     data = '\n'.join(sents)
     r = requests.get(url, params=params, data=data.encode('utf-8'))
-    return r.json()
+    r.encoding = 'utf-8'
+    return json.loads(r.text, strict=False)
 
   def query_pos(self, sents):
     """Standard query for getting POS tags."""
