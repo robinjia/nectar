@@ -13,22 +13,37 @@ DEVNULL = open(os.devnull, 'wb')
 
 class CoreNLPServer(object):
   """An object that runs the CoreNLP server."""
-  def __init__(self, port=9000, logfile=None, lib_path=LIB_PATH):
+  def __init__(self, port=9000, lib_path=LIB_PATH, flags=None, logfile=None):
+    """Create the CoreNLPServer object.
+
+    Args:
+      port: Port on which to serve requests.
+      flags: If provided, pass this list of additional flags to the java server.
+      logfile: If provided, log stderr to this file.
+      lib_path: The path to the CoreNLP *.jar files.
+    """
     self.port = port
     self.lib_path = LIB_PATH
     self.process = None
+    self.p_stderr = None
+    if flags:
+      self.flags = flags
+    else:
+      self.flags = []
     if logfile:
       self.logfd = open(logfile, 'wb')
     else:
       self.logfd = DEVNULL
 
-  def start(self):
+  def start(self, flags=None):
     """Start up the server on a separate process."""
     print >> sys.stderr, 'Using lib directory %s' % self.lib_path
+    if not flags:
+      flags = self.flags
     p = subprocess.Popen(
         ['java', '-mx4g', '-cp', self.lib_path,
          'edu.stanford.nlp.pipeline.StanfordCoreNLPServer',
-         '--port', str(self.port)],
+         '--port', str(self.port)] + flags,
         stderr=subprocess.PIPE, stdout=self.logfd)
     self.process = p
     atexit.register(p.terminate)  # Terminate on exit

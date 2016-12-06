@@ -9,10 +9,18 @@ class CoreNLPClient(object):
     self.port = port
 
   def query(self, sents, properties):
-    """Most general way to query the server."""
+    """Most general way to query the server.
+    
+    Args:
+      sents: Either a string or a list of strings.
+      properties: CoreNLP properties to send as part of the request.
+    """
     url = '%s:%d' % (self.hostname, self.port)
     params = {'properties': str(properties)}
-    data = '\n'.join(sents)
+    if isinstance(sents, list):
+      data = '\n'.join(sents)
+    else:
+      data = sents
     r = requests.get(url, params=params, data=data.encode('utf-8'))
     r.encoding = 'utf-8'
     return json.loads(r.text, strict=False)
