@@ -18,9 +18,9 @@ def log_dict(d, name):
     log('    %s: %s' % (k, str(d[k])))
   log('}')
 
-def timed(func, msg):
+def timed(func, msg, allow_overwrite=True):
   msg1 = '%s...' % msg
-  log(msg1, disappearing=True)
+  log(msg1, disappearing=allow_overwrite)
   t0 = time.time()
   retval = func()
   t1 = time.time()

@@ -28,3 +28,14 @@ def run(cmd, deps, name, description, queue='john', host=None, cpus=1,
     log('Dry run: %s' % str(call_args))
   else:
     subprocess.call(call_args)
+
+def upload(filename, name=None, description=None, dry_run=False):
+  call_args = ['cl', 'up', filename]
+  if name:
+    call_args.extend(['-n', name])
+  if description:
+    call_args.extend(['-d', description])
+  if dry_run:
+    log('Dry run: %s' % str(call_args))
+  else:
+    subprocess.call(call_args)
