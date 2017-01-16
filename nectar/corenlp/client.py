@@ -33,11 +33,17 @@ class CoreNLPClient(object):
     }
     return self.query(sents, properties)
 
-  def query_depparse(self, sents):
+  def query_depparse(self, sents, use_sd=False):
     """Standard query for getting dependency parses on PTB-tokenized input."""
     properties = {
-        'tokenize.whitespace': True,
+        'tokenize.whitespace': use_sd,
+        'ssplit.eolonly': True,
+        'ssplit.newlineIsSentenceBreak': 'always',
         'annotators': 'tokenize,ssplit,pos,depparse',
         'outputFormat':'json'
     }
+    if use_sd:
+      # Use Stanford Dependencies trained on PTB
+      # Default is Universal Dependencies
+      properties['depparse.model'] = 'edu/stanford/nlp/models/parser/nndep/english_SD.gz'
     return self.query(sents, properties)

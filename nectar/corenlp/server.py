@@ -1,7 +1,8 @@
 """Run a CoreNLP Server."""
 import atexit
-import multiprocessing
+import errno
 import os
+import socket
 import subprocess
 import sys
 import time
@@ -44,31 +45,27 @@ class CoreNLPServer(object):
         ['java', '-mx4g', '-cp', self.lib_path,
          'edu.stanford.nlp.pipeline.StanfordCoreNLPServer',
          '--port', str(self.port)] + flags,
-        stderr=subprocess.PIPE, stdout=self.logfd)
+        stderr=self.logfd, stdout=self.logfd)
     self.process = p
-    atexit.register(p.terminate)  # Terminate on exit
-    # Wait until server has started up.
-    while True:
-      line = p.stderr.readline().rstrip()
-      if not line: continue
-      print >> sys.stderr, line
-      if 'listening' in line: 
-        break
+    atexit.register(self.stop)  
 
-    # Start a process to write stderr to the log file
-    def log_stderr():
-      while True:
-        line = p.stderr.readline().rstrip()
-        print >> self.logfd, line
-    self.p_stderr = multiprocessing.Process(target=log_stderr)
-    self.p_stderr.start()
+    # Keep trying to connect until the server is up
+    s = socket.socket()
+    while True:
+      time.sleep(1)
+      try:
+        s.connect(('127.0.0.1', self.port))
+      except socket.error as e:
+        if e.errno != errno.ECONNREFUSED:
+          # Something other than Connection refused means server is running
+          break
+    s.close()
+
 
   def stop(self):
     """Stop running the server on a separate process."""
     if self.process:
       self.process.terminate()
-    if self.p_stderr:
-      self.p_stderr.terminate()
     if self.logfd != DEVNULL:
       self.logfd.close()
 
