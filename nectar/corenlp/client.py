@@ -33,17 +33,48 @@ class CoreNLPClient(object):
     }
     return self.query(sents, properties)
 
-  def query_depparse(self, sents, use_sd=False):
+  def query_depparse_ptb(self, sents, use_sd=False):
     """Standard query for getting dependency parses on PTB-tokenized input."""
+    annotators = 'tokenize,ssplit,pos,depparse'
     properties = {
-        'tokenize.whitespace': use_sd,
+        'tokenize.whitespace': True,
         'ssplit.eolonly': True,
         'ssplit.newlineIsSentenceBreak': 'always',
-        'annotators': 'tokenize,ssplit,pos,depparse',
+        'annotators': annotators,
         'outputFormat':'json'
     }
     if use_sd:
       # Use Stanford Dependencies trained on PTB
       # Default is Universal Dependencies
       properties['depparse.model'] = 'edu/stanford/nlp/models/parser/nndep/english_SD.gz'
+    return self.query(sents, properties)
+
+  def query_depparse(self, sents, use_sd=False, add_ner=False):
+    """Standard query for getting dependency parses on raw sentences."""
+    annotators = 'tokenize,ssplit,pos,depparse'
+    if add_ner:
+      annotators += ',ner'
+    properties = {
+        'ssplit.eolonly': True,
+        'ssplit.newlineIsSentenceBreak': 'always',
+        'annotators': annotators,
+        'outputFormat':'json'
+    }
+    if use_sd:
+      # Use Stanford Dependencies trained on PTB
+      # Default is Universal Dependencies
+      properties['depparse.model'] = 'edu/stanford/nlp/models/parser/nndep/english_SD.gz'
+    return self.query(sents, properties)
+
+  def query_const_parse(self, sents, add_ner=False):
+    """Standard query for getting constituency parses on raw sentences."""
+    annotators = 'tokenize,ssplit,pos,parse'
+    if add_ner:
+      annotators += ',ner'
+    properties = {
+        'ssplit.eolonly': True,
+        'ssplit.newlineIsSentenceBreak': 'always',
+        'annotators': annotators,
+        'outputFormat':'json'
+    }
     return self.query(sents, properties)
