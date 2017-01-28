@@ -23,7 +23,6 @@ class CoreNLPClient(object):
       data = sents
     r = requests.post(url, params=params, data=data.encode('utf-8'))
     r.encoding = 'utf-8'
-    print r.text
     return json.loads(r.text, strict=False)
 
   def query_pos(self, sents):
