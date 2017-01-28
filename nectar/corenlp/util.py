@@ -32,7 +32,6 @@ class ConstituencyParse(object):
   @classmethod
   def _recursive_parse_corenlp(cls, tokens, i):
     orig_i = i
-    print i, tokens[i]
     if tokens[i] == '(':
       tag = tokens[i + 1]
       children = []
@@ -57,7 +56,6 @@ class ConstituencyParse(object):
     # "parse": "(ROOT\n  (SBARQ\n    (WHNP (WDT What)\n      (NP (NN portion)\n        (PP (IN                       of)\n          (NP\n            (NP (NNS households))\n            (PP (IN in)\n              (NP (NNP             Jacksonville)))))))\n    (SQ\n      (VP (VBP have)\n        (NP (RB only) (CD one) (NN person))))\n    (. ?        )))",
     s_spaced = s.replace('\n', ' ').replace('(', ' ( ').replace(')', ' ) ')
     tokens = [t for t in s_spaced.split(' ') if t]
-    print ' '.join(tokens)
     tree, index = cls._recursive_parse_corenlp(tokens, 0)
     if index != len(tokens):
       raise ValueError('Only parsed %d of %d tokens' % (index, len(tokens)))
@@ -71,9 +69,38 @@ class ConstituencyParse(object):
   def print_tree(self, indent=0):
     spaces = '  ' * indent
     if self.word:
-      print '%s(%s %s)' % (spaces, self.tag, self.word)
+      print ('%s%s: %s' % (spaces, self.tag, self.word)).encode('utf-8')
     else:
-      print '%s(%s' % (spaces, self.tag)
+      print '%s%s:' % (spaces, self.tag)
       for c in self.children:
         c.print_tree(indent=indent + 1)
-      print '%s)' % (spaces)
+
+  def get_phrase(self):
+    if self.word: return self.word
+    toks = []
+    for i, c in enumerate(self.children):
+      p = c.get_phrase()
+      if i == 0 or p.startswith("'"):
+        toks.append(p)
+      else:
+        toks.append(' ' + p)
+    return ''.join(toks)
+
+  @classmethod
+  def _recursive_replace_words(cls, tree, new_words, i):
+    if tree.word:
+      new_word = new_words[i]
+      return (cls(tree.tag, word=new_word), i + 1)
+    new_children = []
+    for c in tree.children:
+      new_child, i = cls._recursive_replace_words(c, new_words, i)
+      new_children.append(new_child)
+    return cls(tree.tag, children=new_children), i
+
+  @classmethod
+  def replace_words(cls, tree, new_words):
+    """Return a new tree, with new words replacing old ones."""
+    new_tree, i = cls._recursive_replace_words(tree, new_words, 0)
+    if i != len(new_words):
+      raise ValueError('len(new_words) == %d != i == %d' % (len(new_words), i))
+    return new_tree

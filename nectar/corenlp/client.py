@@ -4,7 +4,7 @@ import requests
 
 class CoreNLPClient(object):
   """A client that interacts with the CoreNLPServer."""
-  def __init__(self, hostname='http://localhost', port=9000):
+  def __init__(self, hostname='http://localhost', port=7000):
     self.hostname = hostname
     self.port = port
 
@@ -21,17 +21,30 @@ class CoreNLPClient(object):
       data = '\n'.join(sents)
     else:
       data = sents
-    r = requests.get(url, params=params, data=data.encode('utf-8'))
+    r = requests.post(url, params=params, data=data.encode('utf-8'))
     r.encoding = 'utf-8'
+    print r.text
     return json.loads(r.text, strict=False)
 
   def query_pos(self, sents):
     """Standard query for getting POS tags."""
     properties = {
+        'ssplit.newlineIsSentenceBreak': 'always',
         'annotators': 'tokenize,ssplit,pos',
         'outputFormat':'json'
     }
     return self.query(sents, properties)
+
+
+  def query_ner(self, paragraphs):
+    """Standard query for getting NERs on raw paragraphs."""
+    annotators = 'tokenize,ssplit,pos,ner,entitymentions'
+    properties = {
+        'ssplit.newlineIsSentenceBreak': 'always',
+        'annotators': annotators,
+        'outputFormat':'json'
+    }
+    return self.query(paragraphs, properties)
 
   def query_depparse_ptb(self, sents, use_sd=False):
     """Standard query for getting dependency parses on PTB-tokenized input."""

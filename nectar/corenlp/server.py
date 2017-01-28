@@ -14,7 +14,7 @@ DEVNULL = open(os.devnull, 'wb')
 
 class CoreNLPServer(object):
   """An object that runs the CoreNLP server."""
-  def __init__(self, port=9000, lib_path=LIB_PATH, flags=None, logfile=None):
+  def __init__(self, port=7000, lib_path=LIB_PATH, flags=None, logfile=None):
     """Create the CoreNLPServer object.
 
     Args:
