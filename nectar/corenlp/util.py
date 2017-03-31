@@ -18,37 +18,38 @@ def rejoin(tokens, sep=None):
 class ConstituencyParse(object):
   """A CoreNLP constituency parse (or a node in a parse tree).
   
-  Word-level constituents have |word| set and no children.
-  Phrase-level constituents have no |word| and have at least one child.
+  Word-level constituents have |word| and |index| set and no children.
+  Phrase-level constituents have no |word| or |index| and have at least one child.
   """
-  def __init__(self, tag, children=None, word=None):
+  def __init__(self, tag, children=None, word=None, index=None):
     self.tag = tag
     if children:
       self.children = children
     else:
       self.children = None
     self.word = word
+    self.index = index
 
   @classmethod
-  def _recursive_parse_corenlp(cls, tokens, i):
+  def _recursive_parse_corenlp(cls, tokens, i, j):
     orig_i = i
     if tokens[i] == '(':
       tag = tokens[i + 1]
       children = []
       i = i + 2
       while True:
-        child, i = cls._recursive_parse_corenlp(tokens, i)
+        child, i, j = cls._recursive_parse_corenlp(tokens, i, j)
         if isinstance(child, cls):
           children.append(child)
           if tokens[i] == ')': 
-            return cls(tag, children), i + 1
+            return cls(tag, children), i + 1, j
         else:
           if tokens[i] != ')':
             raise ValueError('Expected ")" following leaf')
-          return cls(tag, word=child), i + 1
+          return cls(tag, word=child, index=j), i + 1, j + 1
     else:
       # Only other possibility is it's a word
-      return tokens[i], i + 1
+      return tokens[i], i + 1, j
 
   @classmethod
   def from_corenlp(cls, s):
@@ -56,7 +57,7 @@ class ConstituencyParse(object):
     # "parse": "(ROOT\n  (SBARQ\n    (WHNP (WDT What)\n      (NP (NN portion)\n        (PP (IN                       of)\n          (NP\n            (NP (NNS households))\n            (PP (IN in)\n              (NP (NNP             Jacksonville)))))))\n    (SQ\n      (VP (VBP have)\n        (NP (RB only) (CD one) (NN person))))\n    (. ?        )))",
     s_spaced = s.replace('\n', ' ').replace('(', ' ( ').replace(')', ' ) ')
     tokens = [t for t in s_spaced.split(' ') if t]
-    tree, index = cls._recursive_parse_corenlp(tokens, 0)
+    tree, index, num_words = cls._recursive_parse_corenlp(tokens, 0, 0)
     if index != len(tokens):
       raise ValueError('Only parsed %d of %d tokens' % (index, len(tokens)))
     return tree
@@ -69,7 +70,7 @@ class ConstituencyParse(object):
   def print_tree(self, indent=0):
     spaces = '  ' * indent
     if self.word:
-      print ('%s%s: %s' % (spaces, self.tag, self.word)).encode('utf-8')
+      print ('%s%s: %s (%d)' % (spaces, self.tag, self.word, self.index)).encode('utf-8')
     else:
       print '%s%s:' % (spaces, self.tag)
       for c in self.children:
@@ -86,11 +87,19 @@ class ConstituencyParse(object):
         toks.append(' ' + p)
     return ''.join(toks)
 
+  def get_start_index(self):
+    if self.index is not None: return self.index
+    return self.children[0].get_start_index()
+
+  def get_end_index(self):
+    if self.index is not None: return self.index + 1
+    return self.children[-1].get_end_index()
+
   @classmethod
   def _recursive_replace_words(cls, tree, new_words, i):
     if tree.word:
       new_word = new_words[i]
-      return (cls(tree.tag, word=new_word), i + 1)
+      return (cls(tree.tag, word=new_word, index=tree.index), i + 1)
     new_children = []
     for c in tree.children:
       new_child, i = cls._recursive_replace_words(c, new_words, i)
