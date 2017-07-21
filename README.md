@@ -1,5 +1,5 @@
 # Nectar
-A generic Python library.
+A bunch of miscellaneous python and theano utilities.
 
 ## Requirements
 * Python 2.7
