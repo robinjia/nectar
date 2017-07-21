@@ -54,6 +54,9 @@ class NLPArgumentParser(argparse.ArgumentParser):
   def add_clip_thresh(self, short_name=None):
     self.add_flag_helper('clip-thresh', short_name, type=float, default=1.0,
                          help='Total-norm threshold to clip gradients.')
+  def add_batch_size(self, short_name=None):
+    self.add_flag_helper('batch-size', short_name, type=int, default=1,
+                         help='Maximum batch size')
   # Decoding hyperparameters
   def add_beam_size(self, short_name=None):
     self.add_flag_helper('beam-size', short_name, type=int, default=0,
