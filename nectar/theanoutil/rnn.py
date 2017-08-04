@@ -39,6 +39,13 @@ def batch_lstm_split(c_h):
   h = c_h[:,d:]
   return c, h
 
+def time_batch_lstm_split(c_h):
+  """Split the joint c_t and h_t of the LSTM state (time + batch mode)."""
+  d = c_h.shape[2]/2
+  c = c_h[:,:,:d]
+  h = c_h[:,:,d:]
+  return c, h
+
 def batch_lstm_step(c_h_prev, input_t, W_mat):
   """The LSTM recurrence (batch mode).
   
