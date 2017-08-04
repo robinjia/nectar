@@ -1,4 +1,5 @@
 """Standard utilties for a theano model."""
+import collections
 import numbers
 import numpy as np
 import pickle
@@ -32,7 +33,6 @@ class TheanoModel(object):
 
   See these methods for more details.
   """
-  DIVIDE_OBJECTIVE_BY_NUM_EXAMPLES = False
   def __init__(self):
     """A minimal example of what functions must be called during initialization.
 
@@ -63,15 +63,27 @@ class TheanoModel(object):
     raise NotImplementedError
 
   def get_objective(self, example):
-    """Get the loss on a single example."""
+    """Get accuracy metrics on a single example.
+
+    Args:
+      example: An example (possibly batch)
+      lr: Current learning rate
+    Returns:
+      dictionary mapping metric_name to (value, weight);
+      |weight| is used to compute weighted average over dataset.
+    """
     raise NotImplementedError
 
-  def get_regularization(self):
-    """Get current regularization."""
-    return 0.0
-
   def train_one(self, example, lr):
-    """Run training on a single example."""
+    """Run training on a single example.
+    
+    Args:
+      example: An example (possibly batch)
+      lr: Current learning rate
+    Returns:
+      dictionary mapping metric_name to (value, weight);
+      |weight| is used to compute weighted average over dataset.
+    """
     raise NotImplementedError
 
   def create_matrix(self, name, shape, weight_scale, value=None):
@@ -90,7 +102,7 @@ class TheanoModel(object):
     self.param_list.append(mat)
 
   def train(self, train_data, lr_init, epochs, dev_data=None, rng_seed=0,
-            do_plot=False, plot_outfile=None):
+            plot_metric=None, plot_outfile=None):
     """Train the model.
 
     Args:
@@ -100,7 +112,7 @@ class TheanoModel(object):
           where we halve the learning rate after each period.
       dev_data: A list of dev examples, evaluate loss on this each epoch.
       rng_seed: Random seed for shuffling the dataset at each epoch.
-      do_plot: If True, plot a learning curve.
+      plot_metric: If True, plot a learning for the given metric.
       plot_outfile: If provided, save learning curve to file.
     """
     random.seed(rng_seed)
@@ -113,52 +125,47 @@ class TheanoModel(object):
       lr_changes = set([sum(epochs[:i]) for i in range(1, len(epochs))])
       num_epochs = sum(epochs)
     num_epochs_digits = len(str(num_epochs))
-    train_obj_list = []
-    dev_obj_list = []
-    len_train_obj = 0
-    len_dev_obj = 0
+    train_plot_list = []
+    dev_plot_list = []
+    str_len_dict = collections.defaultdict(int)
     len_time = 0
     for epoch in range(num_epochs):
       t0 = time.time()
       random.shuffle(train_data)
       if epoch in lr_changes:
         lr *= 0.5
-      train_obj = 0.0
+      train_metric_list = []
       for ex in train_data:
-        cur_obj = self.train_one(ex, lr)
-        if self.DIVIDE_OBJECTIVE_BY_NUM_EXAMPLES:
-          cur_obj /= float(len(train_data))
-        train_obj += cur_obj
-      regularization = self.get_regularization()
-      train_obj += regularization
+        cur_metrics = self.train_one(ex, lr)
+        train_metric_list.append(cur_metrics)
       if dev_data:
-        dev_obj = sum(self.get_objective(ex) for ex in dev_data)
-        if self.DIVIDE_OBJECTIVE_BY_NUM_EXAMPLES:
-          dev_obj /= float(len(dev_data))
-        #dev_obj += regularization
-        dev_obj_list.append(dev_obj)
+        dev_metric_list = [self.get_objective(ex) for ex in dev_data]
       else:
-        dev_obj = 0.0
-      train_obj_list.append(train_obj)
+        dev_metric_list = []
       t1 = time.time()
 
-      # Some formatting to make things align in columns
-      train_obj_str = '%.3f' % train_obj
-      dev_obj_str = '%.3f' % dev_obj
-      time_str = '%.2f' % (t1 - t0)
-      len_train_obj = max(len(train_obj_str), len_train_obj)
-      len_dev_obj = max(len(dev_obj_str), len_dev_obj)
-      len_time = max(len(time_str), len_time)
-      dev_str = ', dev loss = %s' % dev_obj_str.rjust(len_dev_obj) if dev_data else ''
-      log('Epoch %s: train loss = %s%s (lr = %.1e) (time = %s s)' % (
-          str(epoch+1).rjust(num_epochs_digits), 
-          train_obj_str.rjust(len_train_obj), 
-          dev_str, lr, time_str.rjust(len_time)))
+      # Compute the averaged metrics
+      train_metrics = aggregate_metrics(train_metric_list)
+      dev_metrics = aggregate_metrics(dev_metric_list)
+      if plot_metric:
+        train_plot_list.append(train_metrics[plot_metric])
+        if dev_metrics:
+          dev_plot_list.append(dev_metrics[plot_metric])
 
-    if do_plot:
-      plot_data = [('Train Objective', train_obj_list)]
-      if dev_data:
-        plot_data.append(('Dev Objective', dev_obj_list))
+      # Some formatting to make things align in columns
+      train_str = format_epoch_str('train', train_metrics, str_len_dict)
+      dev_str = format_epoch_str('dev', dev_metrics, str_len_dict)
+      metric_str = ', '.join(x for x in [train_str, dev_str] if x)
+      time_str = '%.2f' % (t1 - t0)
+      len_time = max(len(time_str), len_time)
+      log('Epoch %s: %s [lr = %.1e] [time = %ss]' % (
+          str(epoch+1).rjust(num_epochs_digits), metric_str, lr,
+          time_str.rjust(len_time)))
+
+    if plot_metric:
+      plot_data = [('%s on train data' % plot_metric, train_plot_list)]
+      if dev_plot_list:
+        plot_data.append(('%s on dev data' % plot_metric, dev_plot_list))
       try:
         ntu.plot_learning_curve(plot_data, outfile=plot_outfile)
       except TclError: 
@@ -184,3 +191,25 @@ class TheanoModel(object):
     model.theano_funcs = {}
     model.setup_theano_funcs()
     return model
+
+def aggregate_metrics(metric_list):
+  metrics = collections.OrderedDict()
+  if metric_list: 
+    keys = metric_list[0].keys()
+    for k in keys:
+      numer = sum(x[k][0] * x[k][1] for x in metric_list)
+      denom = sum(x[k][1] for x in metric_list)
+      metrics[k] = float(numer) / denom
+  return metrics
+
+def format_epoch_str(name, metrics, str_len_dict):
+  if not metrics: return ''
+  toks = []
+  for k in metrics:
+    val_str = '%.3f' % metrics[k]
+    len_key = '%s:%s' % (name, k)
+    str_len_dict[len_key] = max(str_len_dict[len_key], len(val_str))
+    cur_str = '%s=%s' % (k, val_str.rjust(str_len_dict[len_key]))
+    toks.append(cur_str)
+  return '%s(%s)' % (name, ', '.join(toks))
+
