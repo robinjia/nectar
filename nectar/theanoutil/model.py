@@ -6,6 +6,7 @@ import pickle
 import random
 import sys
 import theano
+from theano.misc import pkl_utils
 import time
 from Tkinter import TclError
 
@@ -24,7 +25,7 @@ class TheanoModel(object):
     self.__init__(*args, **kwargs)
     self.init_params()
     self.setup_theano_funcs()
-    self.get_objective(example)
+    self.get_metrics(example)
     self.train_one(example, lr)
     self.evaluate(dataset)
 
@@ -62,7 +63,7 @@ class TheanoModel(object):
     """Create theano.function objects for this model in self.theano_funcs."""
     raise NotImplementedError
 
-  def get_objective(self, example):
+  def get_metrics(self, example):
     """Get accuracy metrics on a single example.
 
     Args:
@@ -139,7 +140,7 @@ class TheanoModel(object):
         cur_metrics = self.train_one(ex, lr)
         train_metric_list.append(cur_metrics)
       if dev_data:
-        dev_metric_list = [self.get_objective(ex) for ex in dev_data]
+        dev_metric_list = [self.get_metrics(ex) for ex in dev_data]
       else:
         dev_metric_list = []
       t1 = time.time()
@@ -174,19 +175,20 @@ class TheanoModel(object):
 
   def evaluate(self, dataset):
     """Evaluate the model."""
-    raise NotImplementedError
+    metrics_list = [self.get_metrics(ex) for ex in dataset]
+    return aggregate_metrics(metrics_list)
 
   def save(self, filename):
     tf = self.theano_funcs  # save
     self.theano_funcs = None  # Don't pickle theano functions
     with open(filename, 'wb') as f:
-      pickle.dump(self, f)
+      pkl_utils.dump(self, f)
     self.theano_funcs = tf  # restore
 
   @classmethod
   def load(cls, filename):
     with open(filename, 'rb') as f:
-      model = pickle.load(f)
+      model = pkl_utils.load(f)
     # Recompile theano functions
     model.theano_funcs = {}
     model.setup_theano_funcs()
@@ -206,7 +208,7 @@ def format_epoch_str(name, metrics, str_len_dict):
   if not metrics: return ''
   toks = []
   for k in metrics:
-    val_str = '%.3f' % metrics[k]
+    val_str = '%.4f' % metrics[k]
     len_key = '%s:%s' % (name, k)
     str_len_dict[len_key] = max(str_len_dict[len_key], len(val_str))
     cur_str = '%s=%s' % (k, val_str.rjust(str_len_dict[len_key]))

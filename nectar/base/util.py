@@ -1,4 +1,5 @@
 """General, miscellaneous utilities."""
+from contextlib import contextmanager
 import sys
 import time
 
@@ -27,3 +28,13 @@ def timed(func, msg, allow_overwrite=True):
   msg2 = '%s (took %.2f s).' % (msg, t1 - t0)
   log(msg2)
   return retval
+
+@contextmanager
+def timer(msg, allow_overwrite=True):
+  msg1 = '%s...' % msg
+  log(msg1, disappearing=allow_overwrite)
+  t0 = time.time()
+  yield
+  t1 = time.time()
+  msg2 = '%s (took %.2f s).' % (msg, t1 - t0)
+  log(msg2)
