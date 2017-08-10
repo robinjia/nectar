@@ -6,7 +6,6 @@ import pickle
 import random
 import sys
 import theano
-from theano.misc import pkl_utils
 import time
 from Tkinter import TclError
 
@@ -40,9 +39,10 @@ class TheanoModel(object):
     Implementing subclasses should override this method,
     but maintain the basic functionality presented here.
     """
-    # self.params and self.params_list are required by self.create_matrix()
+    # self.params, self.params_list, and self.param_names are required by self.create_matrix()
     self.params = {}
     self.param_list = []
+    self.param_names = []
 
     # Initialize parameters
     self.init_params()
@@ -101,6 +101,7 @@ class TheanoModel(object):
     mat = theano.shared(name=name, value=value)
     self.params[name] = mat
     self.param_list.append(mat)
+    self.param_names.append(name)
 
   def train(self, train_data, lr_init, epochs, dev_data=None, rng_seed=0,
             plot_metric=None, plot_outfile=None):
@@ -179,20 +180,55 @@ class TheanoModel(object):
     return aggregate_metrics(metrics_list)
 
   def save(self, filename):
-    tf = self.theano_funcs  # save
-    self.theano_funcs = None  # Don't pickle theano functions
+    # Save
+    tf = self.theano_funcs
+    params = self.params
+    param_list = self.param_list
+    # Don't pickle theano functions
+    self.theano_funcs = None
+    # CPU/GPU portability
+    self.params = {k: v.get_value() for k, v in params.iteritems()}
+    self.param_list = None
+    # Any other things to do before saving
+    saved = self._prepare_save()
     with open(filename, 'wb') as f:
-      pkl_utils.dump(self, f)
-    self.theano_funcs = tf  # restore
+      pickle.dump(self, f)
+    # Restore
+    self.theano_funcs = tf
+    self.params = params
+    self.param_list = param_list
+    self._after_save(saved)
+
+  def _prepare_save(self):
+    """Any additional things before calling pickle.dump()."""
+    pass
+
+  def _after_save(self, saved):
+    """Any additional things after calling pickle.dump()."""
+    pass
 
   @classmethod
   def load(cls, filename):
     with open(filename, 'rb') as f:
-      model = pkl_utils.load(f)
+      model = pickle.load(f)
+    # Recreate theano shared variables
+    params = model.params
+    model.params = {}
+    model.param_list = []
+    for name in model.param_names:
+      value = params[name]
+      mat = theano.shared(name=name, value=value)
+      model.params[name] = mat
+      model.param_list.append(mat)
+    model._after_load()
     # Recompile theano functions
     model.theano_funcs = {}
     model.setup_theano_funcs()
     return model
+
+  def _after_load(self):
+    """Any additional things after calling pickle.load()."""
+    pass
 
 def aggregate_metrics(metric_list):
   metrics = collections.OrderedDict()
