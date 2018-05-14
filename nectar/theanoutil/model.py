@@ -10,7 +10,7 @@ import time
 from Tkinter import TclError
 
 import __init__ as ntu
-from .. import log
+from .. import log, secs_to_str
 
 class TheanoModel(object):
   """A generic theano model.
@@ -158,9 +158,9 @@ class TheanoModel(object):
       train_str = format_epoch_str('train', train_metrics, str_len_dict)
       dev_str = format_epoch_str('dev', dev_metrics, str_len_dict)
       metric_str = ', '.join(x for x in [train_str, dev_str] if x)
-      time_str = '%.2f' % (t1 - t0)
+      time_str = secs_to_str(t1 - t0)
       len_time = max(len(time_str), len_time)
-      log('Epoch %s: %s [lr = %.1e] [time = %ss]' % (
+      log('Epoch %s: %s [lr = %.1e] [took %s]' % (
           str(epoch+1).rjust(num_epochs_digits), metric_str, lr,
           time_str.rjust(len_time)))
 
